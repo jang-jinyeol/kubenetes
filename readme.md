@@ -47,19 +47,25 @@ minikube start --vm-driver=none
 sudo minikube status (뜨는지 확인)
 
 Hello server 띄우기
+
 kubectl create deployment web --image=gcr.io/google-samples/hello-app:1.0
 
 공개하기
+
 kubectl expose deployment web --type=NodePort --port=8080
 
 Nginx띄워보기
+
 kubectl run webserver --image=nginx:1.14 --port 80
 
 kubectl get po (확인)
+
 kubectl get po
 
 expose하기
+
 kubectl expose pod webserver --type=NodePort --port=80
 
 service (확인)
+
 kubectl get svc
