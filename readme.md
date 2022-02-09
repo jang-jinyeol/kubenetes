@@ -69,3 +69,22 @@ kubectl expose pod webserver --type=NodePort --port=80
 service (확인)
 
 kubectl get svc
+
+
+## WSL2 설치
+2.1 WSL2 활성화를 위한 DISM 명령어 실행
+2.1.1 Windows Subsystem for Linux 사용 가능하게 설정
+dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+
+2.1.2 Virtual Machine feature 활성화
+dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+
+STORE에서 우분투 설치
+Windows Powershell에서 wsl -l 명령어를 통해 설치 확인
+
+MEMORY ISSUE
+Workaround: Create a %UserProfile%\.wslconfig file in Windows and use it to limit memory assigned to WSL2 VM.
+[wsl2]
+memory=6GB
+swap=0
+localhostForwarding=true
