@@ -100,3 +100,91 @@ memory=6GB
 swap=0
 
 localhostForwarding=true
+
+
+## Minikube: enabling SystemD (WLS에서 실행 시)
+
+# Install the needed packages
+sudo apt install -yqq daemonize dbus-user-session fontconfig
+
+# Create the start-systemd-namespace script
+sudo vi /usr/sbin/start-systemd-namespace
+#!/bin/bash
+
+SYSTEMD_PID=$(ps -ef | grep '/lib/systemd/systemd --system-unit=basic.target$' | grep -v unshare | awk '{print $2}')
+if [ -z "$SYSTEMD_PID" ] || [ "$SYSTEMD_PID" != "1" ]; then
+    export PRE_NAMESPACE_PATH="$PATH"
+    (set -o posix; set) | \
+        grep -v "^BASH" | \
+        grep -v "^DIRSTACK=" | \
+        grep -v "^EUID=" | \
+        grep -v "^GROUPS=" | \
+        grep -v "^HOME=" | \
+        grep -v "^HOSTNAME=" | \
+        grep -v "^HOSTTYPE=" | \
+        grep -v "^IFS='.*"$'\n'"'" | \
+        grep -v "^LANG=" | \
+        grep -v "^LOGNAME=" | \
+        grep -v "^MACHTYPE=" | \
+        grep -v "^NAME=" | \
+        grep -v "^OPTERR=" | \
+        grep -v "^OPTIND=" | \
+        grep -v "^OSTYPE=" | \
+        grep -v "^PIPESTATUS=" | \
+        grep -v "^POSIXLY_CORRECT=" | \
+        grep -v "^PPID=" | \
+        grep -v "^PS1=" | \
+        grep -v "^PS4=" | \
+        grep -v "^SHELL=" | \
+        grep -v "^SHELLOPTS=" | \
+        grep -v "^SHLVL=" | \
+        grep -v "^SYSTEMD_PID=" | \
+        grep -v "^UID=" | \
+        grep -v "^USER=" | \
+        grep -v "^_=" | \
+        cat - > "$HOME/.systemd-env"
+    echo "PATH='$PATH'" >> "$HOME/.systemd-env"
+    exec sudo /usr/sbin/enter-systemd-namespace "$BASH_EXECUTION_STRING"
+fi
+if [ -n "$PRE_NAMESPACE_PATH" ]; then
+    export PATH="$PRE_NAMESPACE_PATH"
+fi
+
+
+# Create the enter-systemd-namespace
+sudo vi /usr/sbin/enter-systemd-namespace
+#!/bin/bash
+
+if [ "$UID" != 0 ]; then
+    echo "You need to run $0 through sudo"
+    exit 1
+fi
+
+SYSTEMD_PID="$(ps -ef | grep '/lib/systemd/systemd --system-unit=basic.target$' | grep -v unshare | awk '{print $2}')"
+if [ -z "$SYSTEMD_PID" ]; then
+    /usr/sbin/daemonize /usr/bin/unshare --fork --pid --mount-proc /lib/systemd/systemd --system-unit=basic.target
+    while [ -z "$SYSTEMD_PID" ]; do
+        SYSTEMD_PID="$(ps -ef | grep '/lib/systemd/systemd --system-unit=basic.target$' | grep -v unshare | awk '{print $2}')"
+    done
+fi
+
+if [ -n "$SYSTEMD_PID" ] && [ "$SYSTEMD_PID" != "1" ]; then
+    if [ -n "$1" ] && [ "$1" != "bash --login" ] && [ "$1" != "/bin/bash --login" ]; then
+        exec /usr/bin/nsenter -t "$SYSTEMD_PID" -a \
+            /usr/bin/sudo -H -u "$SUDO_USER" \
+            /bin/bash -c 'set -a; source "$HOME/.systemd-env"; set +a; exec bash -c '"$(printf "%q" "$@")"
+    else
+        exec /usr/bin/nsenter -t "$SYSTEMD_PID" -a \
+            /bin/login -p -f "$SUDO_USER" \
+            $(/bin/cat "$HOME/.systemd-env" | grep -v "^PATH=")
+    fi
+    echo "Existential crisis"
+fi
+
+
+# Edit the permissions of the enter-systemd-namespace script
+sudo chmod +x /usr/sbin/enter-systemd-namespace
+# Edit the bash.bashrc file
+sudo sed -i 2a"# Start or enter a PID namespace in WSL2\nsource /usr/sbin/start-systemd-namespace\n" /etc/bash.bashrc
+
+
