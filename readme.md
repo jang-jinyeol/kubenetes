@@ -87,6 +87,8 @@ STORE에서 우분투 설치
 
 Windows Powershell에서 wsl -l 명령어를 통해 설치 확인
 
+wsl.exe --set-default-version 2
+
 MEMORY ISSUE
 
 Workaround: Create a %UserProfile%\.wslconfig file in Windows and use it to limit memory assigned to WSL2 VM.
