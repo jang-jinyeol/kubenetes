@@ -285,14 +285,14 @@ kubectl get pods -n kubeflow-user-example-com
 
 
 
-# kubenetes 
+#  ↓ ↓ kubenetes command ↓ ↓
 
 
-네임스페이스 리스트 조회
+# 네임스페이스 리스트 조회
 
 kubectl get ns
 
-★네임스페이스 생성
+# 네임스페이스 생성
 
 yaml파일로 생성할 경우 kubectl create namespace workns를 따로 해줘야 kubectl get ns에서 조회된다.
 
@@ -300,7 +300,8 @@ kubectl create -f testns.yaml
 
 create는 생성하는 것이라 수정한 것을 다시 적용하려면 apply를 사용해야 한다.
 
-현재 활성화 네임스페이스 변경 (예시)
+# 현재 활성화 네임스페이스 변경 (예시)
+
 
 kubectl config set-context --current --namespace=<insert-namespace-name-here>
 
@@ -311,11 +312,11 @@ kubectl config set-context --current --namespace=<insert-namespace-name-here>
 Context "kubernetes-admin@kubernetes" modified.
 
 
-현재 활성화 네임스페이스 조회
+# 현재 활성화 네임스페이스 조회
 
 kubectl config view | grep namespace
 
-네임스페이스 삭제
+# 네임스페이스 삭제
 
 kubectl delete namespace testns
 
