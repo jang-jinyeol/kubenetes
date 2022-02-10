@@ -320,7 +320,8 @@ kubectl config view | grep namespace
 
 kubectl delete namespace testns
 
-파드 조회
+
+# 파드 조회
 
 kubectl get pods -o wide
 
