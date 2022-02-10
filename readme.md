@@ -289,38 +289,50 @@ kubectl get pods -n kubeflow-user-example-com
 
 
 네임스페이스 리스트 조회
+
 kubectl get ns
 
 ★네임스페이스 생성
+
 yaml파일로 생성할 경우 kubectl create namespace workns를 따로 해줘야 kubectl get ns에서 조회된다.
 
 kubectl create -f testns.yaml
+
 create는 생성하는 것이라 수정한 것을 다시 적용하려면 apply를 사용해야 한다.
 
 현재 활성화 네임스페이스 변경 (예시)
+
 kubectl config set-context --current --namespace=<insert-namespace-name-here>
 
 -- workns 네임스페이스로 변경
+
 ~$ kubectl config set-context --current --namespace=workns
+
 Context "kubernetes-admin@kubernetes" modified.
 
 
 현재 활성화 네임스페이스 조회
+
 kubectl config view | grep namespace
 
 네임스페이스 삭제
+
 kubectl delete namespace testns
 
 파드 조회
+
 kubectl get pods -o wide
+
 네임스페이스를 workns로 변경하였으므로 이전에 만든 nginx 파드가 조회되지 않는다.
 
 -n 으로 네임스페이스를 default로 조회하면 nginx 파드가 조회된다.
+
 kubectl get pods -o wide -n default
 
 리소스 중에는 네임스페이스 영향을 받는 받는 리소스와 영향을 받지 않는 리소스로 나눌 수 있다.
 
 kubectl api-resources로 조회 시 NAMESPACED가 true이면 연관된 리소스여서 네임스페이스를 구분하여 실행 할 수 있다.
+
 false로 되어있으면 네임스페이스 영향을 받지 않기 때문에  어느 네임스페이스에서 작업을 하든 같다.
 
 아래 3개의 네임스페이스는 사용하지 않는 것이 좋다.
