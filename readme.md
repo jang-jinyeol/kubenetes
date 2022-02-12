@@ -31,6 +31,18 @@ sh kubectl_install.sh
 
 sh docker_install.sh; sh minikube_install.sh; sh kubectl_install.sh; sh utils.sh
 
+★수정
+
+vmware가 아닌 우분투에선 위의 스크립트로 kubectl이 설치가 안됨
+
+다음 명령으로 최신 릴리스를 다운로드한다.
+
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+
+kubectl 설치
+
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
 ## Docker Compose설치
 sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 
@@ -71,121 +83,6 @@ service (확인)
 kubectl get svc
 
 
-## WSL2 설치
-
-2.1 WSL2 활성화를 위한 DISM 명령어 실행
-
-2.1.1 Windows Subsystem for Linux 사용 가능하게 설정
-
-dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
-
-2.1.2 Virtual Machine feature 활성화
-
-dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
-
-STORE에서 우분투 설치
-
-Windows Powershell에서 wsl -l 명령어를 통해 설치 확인
-
-wsl.exe --set-default-version 2
-
-MEMORY ISSUE
-
-Workaround: Create a %UserProfile%\.wslconfig file in Windows and use it to limit memory assigned to WSL2 VM.
-
-[wsl2]
-
-memory=6GB
-
-swap=0
-
-localhostForwarding=true
-
-
-## Minikube: enabling SystemD (WLS에서 실행 시)
-
-# Install the needed packages
-sudo apt install -yqq daemonize dbus-user-session fontconfig
-
-# Create the start-systemd-namespace script
-sudo vi /usr/sbin/start-systemd-namespace
-#!/bin/bash
-
-SYSTEMD_PID=$(ps -ef | grep '/lib/systemd/systemd --system-unit=basic.target$' | grep -v unshare | awk '{print $2}')
-if [ -z "$SYSTEMD_PID" ] || [ "$SYSTEMD_PID" != "1" ]; then
-    export PRE_NAMESPACE_PATH="$PATH"
-    (set -o posix; set) | \
-        grep -v "^BASH" | \
-        grep -v "^DIRSTACK=" | \
-        grep -v "^EUID=" | \
-        grep -v "^GROUPS=" | \
-        grep -v "^HOME=" | \
-        grep -v "^HOSTNAME=" | \
-        grep -v "^HOSTTYPE=" | \
-        grep -v "^IFS='.*"$'\n'"'" | \
-        grep -v "^LANG=" | \
-        grep -v "^LOGNAME=" | \
-        grep -v "^MACHTYPE=" | \
-        grep -v "^NAME=" | \
-        grep -v "^OPTERR=" | \
-        grep -v "^OPTIND=" | \
-        grep -v "^OSTYPE=" | \
-        grep -v "^PIPESTATUS=" | \
-        grep -v "^POSIXLY_CORRECT=" | \
-        grep -v "^PPID=" | \
-        grep -v "^PS1=" | \
-        grep -v "^PS4=" | \
-        grep -v "^SHELL=" | \
-        grep -v "^SHELLOPTS=" | \
-        grep -v "^SHLVL=" | \
-        grep -v "^SYSTEMD_PID=" | \
-        grep -v "^UID=" | \
-        grep -v "^USER=" | \
-        grep -v "^_=" | \
-        cat - > "$HOME/.systemd-env"
-    echo "PATH='$PATH'" >> "$HOME/.systemd-env"
-    exec sudo /usr/sbin/enter-systemd-namespace "$BASH_EXECUTION_STRING"
-fi
-if [ -n "$PRE_NAMESPACE_PATH" ]; then
-    export PATH="$PRE_NAMESPACE_PATH"
-fi
-
-
-# Create the enter-systemd-namespace
-sudo vi /usr/sbin/enter-systemd-namespace
-#!/bin/bash
-
-if [ "$UID" != 0 ]; then
-    echo "You need to run $0 through sudo"
-    exit 1
-fi
-
-SYSTEMD_PID="$(ps -ef | grep '/lib/systemd/systemd --system-unit=basic.target$' | grep -v unshare | awk '{print $2}')"
-if [ -z "$SYSTEMD_PID" ]; then
-    /usr/sbin/daemonize /usr/bin/unshare --fork --pid --mount-proc /lib/systemd/systemd --system-unit=basic.target
-    while [ -z "$SYSTEMD_PID" ]; do
-        SYSTEMD_PID="$(ps -ef | grep '/lib/systemd/systemd --system-unit=basic.target$' | grep -v unshare | awk '{print $2}')"
-    done
-fi
-
-if [ -n "$SYSTEMD_PID" ] && [ "$SYSTEMD_PID" != "1" ]; then
-    if [ -n "$1" ] && [ "$1" != "bash --login" ] && [ "$1" != "/bin/bash --login" ]; then
-        exec /usr/bin/nsenter -t "$SYSTEMD_PID" -a \
-            /usr/bin/sudo -H -u "$SUDO_USER" \
-            /bin/bash -c 'set -a; source "$HOME/.systemd-env"; set +a; exec bash -c '"$(printf "%q" "$@")"
-    else
-        exec /usr/bin/nsenter -t "$SYSTEMD_PID" -a \
-            /bin/login -p -f "$SUDO_USER" \
-            $(/bin/cat "$HOME/.systemd-env" | grep -v "^PATH=")
-    fi
-    echo "Existential crisis"
-fi
-
-
-# Edit the permissions of the enter-systemd-namespace script
-sudo chmod +x /usr/sbin/enter-systemd-namespace
-# Edit the bash.bashrc file
-sudo sed -i 2a"# Start or enter a PID namespace in WSL2\nsource /usr/sbin/start-systemd-namespace\n" /etc/bash.bashrc
 
 
 
@@ -212,7 +109,7 @@ cd manifests
 while ! kustomize build example | kubectl apply -f -; do echo "Retrying to apply resources"; sleep 10; done
 
 
-# 임시
+# 가상환경이 아닌 우분투에선 따로 설치 필요 X
 
 kustomize build common/kubeflow-namespace/base | kubectl apply -f -
 
