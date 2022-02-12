@@ -33,9 +33,9 @@ sh minikube_install.sh
 
 ★수정
 
-vmware가 아닌 우분투에선 위의 스크립트로 kubectl이 설치가 안됨
+*vmware가 아닌 우분투에선 위의 스크립트로 kubectl이 설치가 안됨
 
-다음 명령으로 최신 릴리스를 다운로드한다.
+*다음 명령으로 최신 릴리스를 다운로드한다.
 
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 
