@@ -54,6 +54,8 @@ docker-compose --version
 
 minikube start --vm-driver=none
 
+~~최소사양 실행 : minikube start --cpus 6 --memory 12288 --disk-size=120g --driver=none~~
+
 에러 발생할 경우 sudo apt-get install -y conntrack
 
 sudo minikube status (뜨는지 확인)
