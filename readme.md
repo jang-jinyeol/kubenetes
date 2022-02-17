@@ -21,7 +21,9 @@ git clone https://github.com/jang-jinyeol/kubenetes.git
 
 sh docker_install.sh
 
-sh minikube_install.sh
+vmware가 아닌 환경에서 virtualbox 깔림
+
+~~sh minikube_install.sh~~
 
 ~~sh kubectl_install.sh~~
 
